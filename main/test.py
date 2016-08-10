@@ -53,28 +53,6 @@ files.append(fourth)
 
 
 
-def readinall():
-    for filename in glob.glob(os.path.join(path, '*.txt')):
-        with open(filename,"r") as subjtext:
-           for doc in subjtext.read().split("\n"):
-               raw_data.append(doc)
-           subjtext.close()
-
-    for field in raw_data:
-        try:
-            raw_corpus[field.split("\t")[0]] = field.split("\t")[1:]
-        except IndexError:
-            continue
-
-    items = raw_corpus.items()
-    shuffle(list(items))
-    new_dic = OrderedDict(items)
-    for i in new_dic.items():
-        try:
-            corpus.append(i[1][3])
-            labels.append(i[1][0])
-        except IndexError:
-            continue
 
 def readin(filename):
     with open(filename,"r") as subjtext:
@@ -91,29 +69,14 @@ def readin(filename):
     items = raw_corpus.items()
     shuffle(list(items))
     new_dic = OrderedDict(items)
+
     for i in new_dic.items():
         try:
             corpus_combined.append(i[1][3])
-            labels_combined.append(i[1][1])
-
-            # if i[1][0] == "0" or i[1][0] == "2":
-            #     corpus_combined.append(i[1][3])
-            #     labels_combined.append(i[1][0])
-
-            # if i[1][0] == "0":
-            #     corpus_0.append(i[1][3])
-            #     labels.append(i[1][0])
-            # elif i[1][0] == "1":
-            #     corpus_1.append(i[1][3])
-            #     labels.append(i[1][0])
-            # elif i[1][0] == "2":
-            #     corpus_2.append(i[1][3])
-            #     labels.append(i[1][0])
+            labels_combined.append(i[1][0])
 
         except IndexError:
             continue
-
-
 
 
 def fill_feeling_dic():
@@ -217,17 +180,21 @@ class PolarityTransformer(BaseEstimator, TransformerMixin):
             features_list.append(feat)
         return features_list
 
-class DenseTransformer(BaseEstimator, TransformerMixin):
-    def fit(self, x, y=None):
-        return self
-
-    def transform(self, sparsemat):
-        return sparsemat.toarray()
 
 def transform_and_classify():
+    bigram_vectorizer = CountVectorizer(ngram_range=(1,2), token_pattern=r'\b\w+\b', min_df=1 )
+    transformer = TfidfVectorizer(min_df=1)
+    combined_features = FeatureUnion([("univ_select", transformer) ,("grams",bigram_vectorizer),
+                                        ("polarity",Pipeline([
+                                            ("poli", PolarityTransformer()),
+                                            ("vect", DictVectorizer())
+                                        ])),
+                                        ("emotion",Pipeline([
+                                            ("poli", EmotionTransformer()),
+                                            ("vect", DictVectorizer())
+                                        ]))
+                                    ])
 
-    # por_80 = int(((len(corpus_combined))/100)*80)
-    # print(por_80)
 
     text_clf = Pipeline([
                          ('features', combined_features),
@@ -248,19 +215,6 @@ def classify(filename):
     transform_and_classify()
 
 
-def max_word(corpus):
-    # vectorizer_def = CountVectorizer(min_df=1, stop_words="english")
-    vectorizer_def = CountVectorizer(ngram_range=(3,3), token_pattern=r'\b\w+\b', min_df=1)
-    X3 = vectorizer_def.fit_transform(corpus)
-    Y2 = np.sum(X3.toarray(), axis=0)
-    wordfreq = {}
-    for word in vectorizer_def.get_feature_names():
-        field = vectorizer_def.vocabulary_.get(word)
-        wordfreq[word] = Y2[field]
-
-    max_word_frequ = (sorted(wordfreq.items(), key=operator.itemgetter(1), reverse=True)[:10])
-    print(max_word_frequ)
-
 if __name__ == '__main__':
     start_time = time.time()
 
@@ -273,90 +227,16 @@ if __name__ == '__main__':
     polarity_dic = {}
     feeling_dic = {}
 
-    clf = OneVsOneClassifier(LinearSVC(random_state=0,C=1))
-
-    vectorizer = CountVectorizer(min_df=1)
-
-    bigram_vectorizer = CountVectorizer(ngram_range=(1,2), token_pattern=r'\b\w+\b', min_df=1 )
-    # bigram_vectorizer = CountVectorizer(ngram_range=(1,2), token_pattern=r'\b\w+\b', min_df=1, stop_words="english")
-
-    transformer = TfidfVectorizer(min_df=1)
-    # transformer = TfidfVectorizer(min_df=1, stop_words="english")
-
-    combined_features = FeatureUnion([("univ_select", transformer) ,("grams",bigram_vectorizer),
-                                        ("polarity",Pipeline([
-                                            ("poli", PolarityTransformer()),
-                                            ("vect", DictVectorizer())
-                                        ])),
-                                        ("emotion",Pipeline([
-                                            ("poli", EmotionTransformer()),
-                                            ("vect", DictVectorizer())
-                                        ]))
-                                    ])
-
-    lexi_features = FeatureUnion([
-                                        ("polarity",Pipeline([
-                                            ("poli", PolarityTransformer()),
-                                            ("vect", DictVectorizer())
-                                        ])),
-                                        ("emotion",Pipeline([
-                                            ("poli", EmotionTransformer()),
-                                            ("vect", DictVectorizer())
-                                        ]))
-                                    ])
     fill_feeling_dic()
-    fill_polarity_dic()
+    fill_polarity_dic(
 
-    for filename in files:
+        for filename in files:
         print("CLASSIFICATION FOR :"+filename)
         print("#####################################")
         classify(filename)
-
-        # readin(filename)
-        # print("corpus 0")
-        # max_word(corpus_0)
-        # print("corpus 1")
-        # max_word(corpus_1)
-        # print("corpus 2")
-        # max_word(corpus_2)
-
 
         corpus_combined = []
         labels_combined = []
         raw_data = []
         raw_corpus = {}
-
-        clf = OneVsOneClassifier(LinearSVC(random_state=0,C=1))
-
-        vectorizer = CountVectorizer(min_df=1)
-
-        bigram_vectorizer = CountVectorizer(ngram_range=(1,2), token_pattern=r'\b\w+\b', min_df=1)
-        # bigram_vectorizer = CountVectorizer(ngram_range=(1,2), token_pattern=r'\b\w+\b', min_df=1, stop_words="english")
-
-        transformer = TfidfVectorizer(min_df=1)
-        # transformer = TfidfVectorizer(min_df=1, stop_words="english")
-
-        combined_features = None
-        combined_features = FeatureUnion([ ("univ_select", transformer),("grams",bigram_vectorizer),
-                                        ("polarity",Pipeline([
-                                            ("poli", PolarityTransformer()),
-                                            ("vect", DictVectorizer())
-                                        ])),
-                                        ("emotion",Pipeline([
-                                            ("poli", EmotionTransformer()),
-                                            ("vect", DictVectorizer())
-                                        ]))
-                                    ])
-
-        lexi_features = FeatureUnion([
-                                        ("polarity",Pipeline([
-                                            ("poli", PolarityTransformer()),
-                                            ("vect", DictVectorizer())
-                                        ])),
-                                        ("emotion",Pipeline([
-                                            ("poli", EmotionTransformer()),
-                                            ("vect", DictVectorizer())
-                                        ]))
-                                    ])
-
     print("--- %s seconds ---" % round((time.time() - start_time),3))
