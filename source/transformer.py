@@ -1,8 +1,26 @@
+"""
+Transformer Module
+"""
+
 from sklearn.base import BaseEstimator, TransformerMixin
 import operator
 
 
 class PolarityTransformer(BaseEstimator, TransformerMixin):
+    """
+    Transformer for pipeline construction with scikit-learn.
+    For reference see: http://scikit-learn.org/stable/modules/pipeline.html
+
+    This Transformer Class is used to build a simple Lexicon approach for
+    predicting the polarity of a given document. The Lexicon used for this
+    procedure is placed in the polarity_lex dir.
+
+    Parameter
+    ---------
+    polarity_dic : hash, obligatory
+        Contains the polarity information of the polarity_lex dir.
+        (hash map build with an inverted index)
+    """
 
     def __init__(self, polarity_dic):
         self.polarity_dic = polarity_dic
@@ -10,9 +28,32 @@ class PolarityTransformer(BaseEstimator, TransformerMixin):
     def fit(self, x, y=None):
         return self
 
-    def transform(self, corpus_combined):
+    def transform(self, corpus):
+        """ Transform method for pipeline
+
+        This method counts the number of negative
+        and positive words within a document.
+
+        Note
+        ----
+        The output structure is build for a DictVectorizer()
+        Object. For reference see:
+        http://scikit-learn.org/stable/modules/feature_extraction.html
+
+        Parameter
+        --------
+        corpus : hash
+            Contains the documents of the corpus as
+            strings.
+
+        Returns
+        -------
+        feature_list : array
+            Contains a hash map for every document with
+            corresponding feature values.
+        """
         features_list = []
-        for doc in corpus_combined:
+        for doc in corpus:
             feat = {}
             pos_count = 0
             neg_count = 0
@@ -38,17 +79,55 @@ class PolarityTransformer(BaseEstimator, TransformerMixin):
 
 
 class EmotionTransformer(BaseEstimator, TransformerMixin):
+    """
+    Transformer for pipeline construction with scikit-learn.
+    For reference see: http://scikit-learn.org/stable/modules/pipeline.html
 
+    This Transformer Class is used to build a simple Lexicon approach for
+    predicting the emotion of a given document. The Lexicon used for this
+    procedure is placed in the emotion_lex dir.
+
+    Parameter
+    ---------
+    emotion_dic : hash, obligatory
+        Contains the emotion information of the emotion_lex dir.
+        (hash map build with an inverted index)
+    """
     def __init__(self, emotion_dic):
         self.emotion_dic = emotion_dic
 
     def fit(self, x, y=None):
         return self
 
-    def transform(self, corpus_combined):
+    def transform(self, corpus):
+        """ Transform method for pipeline
+
+        This method counts the number of words indicating
+        anger, fear, disgust, joy, surprise and sadness within
+        a document. The maximum number is set as feature value
+        and predicted emotion.
+
+        Note
+        ----
+        The output structure is build for a DictVectorizer()
+        Object. For reference see:
+        http://scikit-learn.org/stable/modules/feature_extraction.html
+
+        Parameter
+        --------
+        corpus : hash
+            Contains the documents of the corpus as
+            strings.
+
+        Returns
+        -------
+        feature_list : array
+            Contains a hash map for every document with
+            corresponding feature values.
+        """
         features_list = []
 
-        for doc in corpus_combined:
+        for doc in corpus:
             feat = {
                 "anger": 0,
                 "disgust": 0,

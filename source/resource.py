@@ -1,3 +1,12 @@
+"""
+Resource Module
+
+Contains the relative paths of the lexicon and corpus dirs.
+On every run the lexicons and corpora are build up once and
+written to the ram. There is no serialization for lexicon and
+corpus objects in the classification system. (Cause there is no
+need for runtime improvement)
+"""
 import os
 from os import listdir
 
