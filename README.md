@@ -1,7 +1,7 @@
 Sentiment Analysis Task (Rating Inference Problem)
 ==========================================
  
-Bitbucket: https://bitbucket.org/frosk/star_prediction
+Bitbucket: https://bitbucket.org/IMS_CREW/star_prediction
 
  
 About
@@ -61,4 +61,3 @@ Requirements-Python and Modules
 ===============================
 - Python 3.5
 - scikit-learn 0.17.1
-
